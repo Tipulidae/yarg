@@ -1,21 +1,19 @@
 package game;
 
-
-// TODO
 public class GameInfo {
-	// Change to map of Territory?
-	private WorldMap wm;
-	private String currentPlayer;
+	public final Phase phase;
+	public final String player;
+	public final int reinforcements;
 	
-	public GameInfo(WorldMap wm) {
-		this.wm = wm;
+	public GameInfo(Phase phase, String player, int reinforcements) {
+		this.phase = phase;
+		this.player = player;
+		this.reinforcements = reinforcements;
 	}
 	
-	public String ownerOf(String territory) {
-		return wm.ownerOf(territory);
-	}
 	
-	public int reinforcementsRemaining() {
-		return 0;
+	@Override
+	public String toString() {
+		return "Phase: "+phase+", player: "+player+", reinforcements: "+reinforcements;
 	}
 }

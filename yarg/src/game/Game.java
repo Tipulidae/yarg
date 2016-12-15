@@ -1,12 +1,15 @@
 package game;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 public class Game extends Thread {
 	private List<Player> players = new ArrayList<Player>();
+	private Map<String,Player> players2 = new HashMap<>();
 	private Player currentPlayer;
 	private Semaphore beginTurn = new Semaphore(0);
 	private Semaphore endTurn = new Semaphore(0);
@@ -21,11 +24,13 @@ public class Game extends Thread {
 	}
 	
 	public void addComputer(String name) {
-		players.add(new Computer(name, control));
+		//players.add(new Computer(name, control));
+		players2.put(name, new Computer(name, control));
 	}
 	
 	public void addHuman(String name) {
-		players.add(new Human(name, control, cm));
+		//players.add(new Human(name, control, cm));
+		players2.put(name, new Human(name, control, cm));
 	}
 	
 	
@@ -37,6 +42,16 @@ public class Game extends Thread {
 		try {
 			
 			while (!gameOver()) {
+				currentPlayer = players2.get(control.currentPlayer());
+				beginTurn.release();
+				if (!endTurn.tryAcquire(5,TimeUnit.MINUTES)) {
+					executor.interrupt();
+					endTurn.acquire();
+				}
+				
+				tempTurnCounter++;
+				
+				/*
 				for (int i = 0; i < players.size(); i++) {
 					currentPlayer = players.get(i);
 					control.prepareNextTurn(currentPlayer.toString());
@@ -48,6 +63,8 @@ public class Game extends Thread {
 
 				}
 				tempTurnCounter++;
+				*/
+				
 			}
 			
 		} catch (InterruptedException e) {
@@ -59,6 +76,10 @@ public class Game extends Thread {
 	
 	public ClickMonitor getClickMonitor() {
 		return cm;
+	}
+	
+	public Control getControl() {
+		return control;
 	}
 	
 	public List<Player> players() {
@@ -80,6 +101,8 @@ public class Game extends Thread {
 					endTurn.release();
 				} catch (InterruptedException e) {
 					System.out.println(currentPlayer.toString()+" took too long. Turn forfeited!");
+					control.endTurn();
+					endTurn.release();
 				}
 			}
 		}

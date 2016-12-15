@@ -1,9 +1,14 @@
 package gui;
 
 import java.awt.BorderLayout;
+import java.util.Observable;
+import java.util.Observer;
+
 import javax.swing.JFrame;
 
-public class MainWindow extends JFrame {
+import game.GameInfo;
+
+public class MainWindow extends JFrame implements Observer {
 	// region constructor
 
 	/**
@@ -29,5 +34,12 @@ public class MainWindow extends JFrame {
 		// Console console = new Console(1250, 100);
 		// add console to window
 		// add(console.getScrollPane(), BorderLayout.SOUTH);
+	}
+
+	@Override
+	public void update(Observable o, Object info) {
+		GameInfo gi = (GameInfo)info;
+		System.out.println(Thread.currentThread().getName()+": "+gi.toString());
+		
 	}
 }

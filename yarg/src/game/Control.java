@@ -1,22 +1,67 @@
 package game;
 
+import java.util.Observable;
 import java.util.Random;
 
-public class Control {
+import javax.swing.SwingUtilities;
+
+public class Control extends Observable implements Info {
 	private WorldMap wm;
-	private GameInfo info;
 	private String currentPlayer;
 	private Phase phase = Phase.START;
 	private int reinforcements;
 	
 	public Control(WorldMap wm) {
 		this.wm = wm;
-		info = new GameInfo(wm);
+		
+		// TODO
+		// temporary!
+		currentPlayer = "green";
+	}
+	
+	
+	public synchronized void perform(Action action) {
+		if (!RuleBook.isValid(action, this)) {
+			System.out.println("Invalid Move! Throw exception blablabla");
+			return;
+		}
+		
+		switch (phase) {
+		case REINFORCE:
+			reinforce(action.from,action.amount);
+			break;
+		case ATTACK:
+			System.out.println("Attacking "+action.to+" with "+action.amount+" troops from "+action.from+"!");
+			break;
+		case MOVE:
+			System.out.println("Reinforcing "+action.to+" with "+action.amount+" troops from "+action.from+"!");
+			break;
+		default:
+			System.out.println("Can't perform actions if the game hasn't started!");
+		}
+	}
+	
+	public synchronized void endTurn() {
+		phase = Phase.REINFORCE;
+		
+		// TODO
+		// Temporary!!!
+		reinforcements = 10;
+		if (currentPlayer.equals("red"))
+			currentPlayer = "green";
+		else
+			currentPlayer = "red";
+		
+		update();
 	}
 	
 	
 	// Temporary function
-	public void randomizeTerritoryOwners() {
+	public synchronized void randomizeTerritoryOwners() {
+		if (phase != Phase.START) {
+			System.out.println("Can't randomize territories after the game has started!");
+			return;
+		}
 		Random r = new Random();
 		for (TerritoryActual t : wm.allTerritories()) {
 			t.setOwner("nobody");
@@ -35,38 +80,65 @@ public class Control {
 				break;
 			}
 		}
+		
+		endTurn();
 	}
 	
-	public void addReinforcements(String t, int n) {
-		if (!wm.territoryExists(t) || n <= 0 || !wm.ownerOf(t).equals(currentPlayer)) return;
-		n = n > reinforcements ? reinforcements : n;
-		
+	
+	private void reinforce(String t, int n) {
 		wm.territory(t).addTroops(n);
-		System.out.println("Adding " + n + " to " + t);
-		
 		reinforcements -= n;
-		if (reinforcements == 0) {
-			phase = Phase.next(phase);
-			System.out.println("Reinforcement Phase Complete!");
+		if (reinforcements <= 0) {
+			endPhase();
+		} else {
+			update();
 		}
 	}
 	
-	public void attack(String from, String to) {
-		// TODO
+	private void endPhase() {
+		System.out.println(phase+" Phase Complete!");
+		phase = Phase.next(phase);
+		update();
 	}
 	
-	public GameInfo getInfo() {
-		return info;
+	private void update() {
+		System.out.println("update!");
+		//GameInfo gi = new GameInfo(phase, currentPlayer, reinforcements);
+		setChanged();
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				notifyObservers(new GameInfo(phase, currentPlayer, reinforcements));
+			}
+		});
 	}
 	
-	public Phase phase() {
+	
+	@Override
+	public synchronized Phase phase() {
 		return phase;
 	}
-	
-	public void prepareNextTurn(String player) {
-		currentPlayer = player;
-		phase = Phase.REINFORCE;
-		reinforcements = 10;
+
+	@Override
+	public synchronized String currentPlayer() {
+		return currentPlayer;
+	}
+
+
+	@Override
+	public synchronized int reinforcementsRemaining() {
+		return reinforcements;
+	}
+
+
+	@Override
+	public synchronized int previouslyMoved(String from) {
+		return 0;
+	}
+
+
+	@Override
+	public synchronized boolean currentPlayerOwnsTerritory(String t) {
+		return wm.territoryExists(t) && currentPlayer.equals(wm.ownerOf(t));
 	}
 }
 

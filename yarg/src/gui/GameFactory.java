@@ -1,5 +1,7 @@
 package gui;
 
+import java.util.Observer;
+
 import javax.swing.SwingUtilities;
 
 import game.Game;
@@ -17,7 +19,8 @@ public class GameFactory {
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				new MainWindow(new MapPanel(loader.getLands(), risk.getClickMonitor()));
+				MainWindow w = new MainWindow(new MapPanel(loader.getLands(), risk.getClickMonitor()));
+				risk.getControl().addObserver((Observer)w);
 			}
 		});
 		
