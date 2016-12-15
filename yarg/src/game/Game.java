@@ -39,6 +39,7 @@ public class Game extends Thread {
 			while (!gameOver()) {
 				for (int i = 0; i < players.size(); i++) {
 					currentPlayer = players.get(i);
+					control.prepareNextTurn(currentPlayer.toString());
 					beginTurn.release();
 					//endTurn.acquire();
 					if (!endTurn.tryAcquire(5,TimeUnit.MINUTES)) {

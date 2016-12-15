@@ -7,16 +7,15 @@ public abstract class Player {
 		this.name = name;
 	}
 	
+	@Override
+	public String toString() {
+		return name;
+	}
+	
 	protected abstract void executeTurn() throws InterruptedException;
 	
 	public static final Player NULL = new Player("Null") {
-		
 		@Override
 		protected void executeTurn() {};
-		
-		@Override
-		public String toString() {
-			return "NULL";
-		}
 	};
 }

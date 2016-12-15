@@ -5,6 +5,7 @@ package game;
 public class GameInfo {
 	// Change to map of Territory?
 	private WorldMap wm;
+	private String currentPlayer;
 	
 	public GameInfo(WorldMap wm) {
 		this.wm = wm;

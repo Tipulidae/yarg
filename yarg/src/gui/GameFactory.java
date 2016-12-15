@@ -4,6 +4,8 @@ import javax.swing.SwingUtilities;
 
 import game.Game;
 
+
+// Should this be in a separate package?
 public class GameFactory {
 	public static Game gameWithInterface() {
 		MapLoader loader = new MapLoader("maps/world.map");

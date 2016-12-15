@@ -16,14 +16,13 @@ public class Human extends Player {
 	
 	
 	public void handleClick() {
-		switch (currentPhase) {
+		switch (control.phase()) {
 		case REINFORCE:
-			if (info.ownerOf(input.lastClickedTerritory).equals(name)) {
-				int amount = input.ctrl ? 5 : 1;
-				control.addReinforcements(input.lastClickedTerritory, amount);
-			}
+			int amount = input.ctrl ? 5 : 1;
+			control.addReinforcements(input.lastClickedTerritory, amount);
 			break;
 		case ATTACK:
+			System.out.println("Attack phase!");
 			break;
 		case MOVE:
 			break;
@@ -41,11 +40,6 @@ public class Human extends Player {
 			if (endTurn()) return;
 			else handleClick();
 		}
-	}
-	
-	@Override
-	public String toString() {
-		return "Human";
 	}
 	
 	private boolean endTurn() {

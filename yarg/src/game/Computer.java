@@ -14,9 +14,4 @@ public class Computer extends Player {
 		Thread.sleep(2000);
 		control.addReinforcements("Alaska", 10);
 	}
-
-	@Override
-	public String toString() {
-		return "Computer";
-	}
 }
