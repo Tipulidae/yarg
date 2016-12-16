@@ -1,13 +1,13 @@
 package game;
 
 public class Human extends Player {
-	private Control control;
 	private ClickMonitor cm;
 	private ClickState input;
 	
-	public Human(String name, Control control, ClickMonitor cm) {
-		super(name);
-		this.control = control;
+	private String from = null;
+	
+	public Human(String name, Control control, WorldMapInfo wm, ClickMonitor cm) {
+		super(name, control, wm);
 		this.cm = cm;
 	}
 	
@@ -20,6 +20,17 @@ public class Human extends Player {
 			break;
 		case ATTACK:
 			System.out.println("Attack phase!");
+			String t = input.lastClickedTerritory;
+			if (wm.territoryExists(t)) {
+				if (wm.isOwnerOf(name, input.lastClickedTerritory)) {
+					from = input.lastClickedTerritory;
+				} else if (from != null) {
+					control.perform(new Action(from,t,3));
+				}
+			} else {
+				from = null;
+			}
+			
 			break;
 		case MOVE:
 			break;
@@ -35,7 +46,8 @@ public class Human extends Player {
 		while (true) {
 			input = cm.getHumanInput();
 			if (endTurn()) {
-				control.endTurn();
+				control.endPhase();
+				from = null;
 				return;
 			}
 			else handleClick();

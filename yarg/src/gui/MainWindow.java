@@ -39,7 +39,7 @@ public class MainWindow extends JFrame implements Observer {
 	@Override
 	public void update(Observable o, Object info) {
 		GameInfo gi = (GameInfo)info;
-		System.out.println(Thread.currentThread().getName()+": "+gi.toString());
+		System.out.println(gi);
 		
 	}
 }

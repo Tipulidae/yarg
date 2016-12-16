@@ -2,6 +2,7 @@ package gui;
 
 import javax.swing.JFrame;
 
+// Consider Modal Dialog + CardLayout instead of multiple frames
 public class SetupWindow extends JFrame {
 	public SetupWindow () {
 		this.setSize(500, 300);

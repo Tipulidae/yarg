@@ -4,12 +4,17 @@ import java.awt.Point;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import game.Continent;
+import game.Territory;
 import game.TerritoryActual;
 import game.WorldMap;
 
@@ -22,9 +27,13 @@ public class MapLoader {
 	private static final String patchR = "patch-of ("+nameR+") ("+pointsR+")";
 	private static final String capitalR = "capital-of ("+nameR+") ("+pointR+")";
 	private static final String neighborsR = "neighbors-of ("+nameR+") : ((?:"+nameR+" - )*"+nameR+")?";
+	private static final String continentR = "continent ("+nameR+") (\\d+) : ((?:"+nameR+" - )*"+nameR+")?";
 	
 	private static final String completeRegexp = 
-			"(?<patch>"+patchR+")|(?<capital>"+capitalR+")|(?<neighbors>"+neighborsR+")";
+			"(?<patch>"+patchR+
+			")|(?<capital>"+capitalR+
+			")|(?<neighbors>"+neighborsR+
+			")|(?<continent>"+continentR+")";
 	
 
     private Pattern pattern = Pattern.compile(completeRegexp);
@@ -32,6 +41,8 @@ public class MapLoader {
 	private String mapname;
 	
     private Map<String,Land> lands = new HashMap<String,Land>();
+    private Map<String,TerritoryActual> territories = new HashMap<String,TerritoryActual>();
+    private Map<String,Continent> continents = new HashMap<String,Continent>();
     private WorldMap wm;
     
     public MapLoader(String mapname) {
@@ -63,11 +74,12 @@ public class MapLoader {
 	}
 	
 	private void loadWorldMap() {
+		/*
 		Map<String,TerritoryActual> territories = new HashMap<String,TerritoryActual>();
     	for (Land land : lands.values()) {
     		territories.put(land.toString(), new TerritoryActual());
-    	}
-    	wm = new WorldMap(territories);
+    	}*/
+    	wm = new WorldMap(territories, continents);
 	}
 	
 	private void parse(String line) {
@@ -79,6 +91,8 @@ public class MapLoader {
 				parseCapital(m.group(5), m.group(6));
 			else if (m.group("neighbors") != null) 
 				parseNeighbors(m.group(8), m.group(9));
+			else if (m.group("continent") != null)
+				parseContinent(m.group(11),m.group(12), m.group(13));
 		}
 	}
 	
@@ -96,18 +110,18 @@ public class MapLoader {
 	private void parseNeighbors(String name, String neighbors) {
 		String[] ns = neighbors.split(" - ");
 		Land land = getLand(name);
-		
+		TerritoryActual t = territories.get(name);
 		for (String n : ns) {
 			land.addNeighbor(getLand(n));
+			t.addNeighbor(territories.get(n));
 		}
-		
-		
-		/*
-		System.out.print("name: "+name+", neighbors: ");
-		for (String n : ns) {
-			System.out.print(n+", ");
-		}
-		System.out.println();*/
+	}
+	
+	private void parseContinent(String name, String value, String lands) {
+		String[] ls = lands.split(" - ");
+		//Set<Territory> ts = new HashSet<Territory>();
+		Continent c = new Continent(name, Integer.parseInt(value), new HashSet<String>(Arrays.asList(ls)));
+		continents.put(name, c);
 	}
 	
 	private Patch parsePatch(String str) {
@@ -129,14 +143,14 @@ public class MapLoader {
 		} else {
 			Land land = new Land(name);
 			lands.put(name,land);
+			territories.put(name, new TerritoryActual(name));
 			return land;
 		}
 	}
 	
 	private void addObservers() {
-    	for (Land land : lands.values()) {
-    		TerritoryActual t = wm.territory(land.toString());
-    		t.addObserver(land);
-    	}
+		lands.values().forEach(land -> 
+			wm.territory(land.toString()).
+				addObserver(land));
     }
 }

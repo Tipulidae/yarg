@@ -1,11 +1,9 @@
 package game;
 
 public class Computer extends Player {
-	private Control control;
 
-	public Computer(String name, Control c) {
-		super(name);
-		control = c;
+	public Computer(String name, Control c, WorldMapInfo wm) {
+		super(name,c,wm);
 	}
 
 	@Override

@@ -6,4 +6,5 @@ public interface Territory {
 	public int getTroops();
 	public String getOwner();
 	public List<Territory> getNeighbors();
+	public boolean borders(Territory t);
 }

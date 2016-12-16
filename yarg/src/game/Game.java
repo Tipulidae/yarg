@@ -1,36 +1,37 @@
 package game;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 public class Game extends Thread {
-	private List<Player> players = new ArrayList<Player>();
-	private Map<String,Player> players2 = new HashMap<>();
+	private Map<String,Player> players = new HashMap<>();
 	private Player currentPlayer;
 	private Semaphore beginTurn = new Semaphore(0);
 	private Semaphore endTurn = new Semaphore(0);
 	private ClickMonitor cm = new ClickMonitor();
 	private Control control;
+	private WorldMapInfo wm;
 	
 	private int tempTurnCounter = 0;
 	
 	public Game(WorldMap wm) {
 		super("Game thread");
 		control = new Control(wm);
+		this.wm = wm;
 	}
 	
 	public void addComputer(String name) {
 		//players.add(new Computer(name, control));
-		players2.put(name, new Computer(name, control));
+		players.put(name, new Computer(name, control, wm));
+		control.addPlayer(name);
 	}
 	
 	public void addHuman(String name) {
 		//players.add(new Human(name, control, cm));
-		players2.put(name, new Human(name, control, cm));
+		players.put(name, new Human(name, control, wm, cm));
+		control.addPlayer(name);
 	}
 	
 	
@@ -42,7 +43,7 @@ public class Game extends Thread {
 		try {
 			
 			while (!gameOver()) {
-				currentPlayer = players2.get(control.currentPlayer());
+				currentPlayer = players.get(control.currentPlayer());
 				beginTurn.release();
 				if (!endTurn.tryAcquire(5,TimeUnit.MINUTES)) {
 					executor.interrupt();
@@ -80,10 +81,6 @@ public class Game extends Thread {
 	
 	public Control getControl() {
 		return control;
-	}
-	
-	public List<Player> players() {
-		return players;
 	}
 	
 	private boolean gameOver() {

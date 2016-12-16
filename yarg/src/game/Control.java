@@ -1,5 +1,7 @@
 package game;
 
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.Observable;
 import java.util.Random;
 
@@ -11,17 +13,20 @@ public class Control extends Observable implements Info {
 	private Phase phase = Phase.START;
 	private int reinforcements;
 	
+	private Deque<String> players = new LinkedList<String>();
+	
 	public Control(WorldMap wm) {
 		this.wm = wm;
 		
 		// TODO
 		// temporary!
 		currentPlayer = "green";
+		System.out.println("Control initialized");
 	}
 	
 	
 	public synchronized void perform(Action action) {
-		if (!RuleBook.isValid(action, this)) {
+		if (!RuleBook.isValid(action, this, wm)) {
 			System.out.println("Invalid Move! Throw exception blablabla");
 			return;
 		}
@@ -32,6 +37,7 @@ public class Control extends Observable implements Info {
 			break;
 		case ATTACK:
 			System.out.println("Attacking "+action.to+" with "+action.amount+" troops from "+action.from+"!");
+			attack(action.from, action.to, action.amount);
 			break;
 		case MOVE:
 			System.out.println("Reinforcing "+action.to+" with "+action.amount+" troops from "+action.from+"!");
@@ -44,17 +50,17 @@ public class Control extends Observable implements Info {
 	public synchronized void endTurn() {
 		phase = Phase.REINFORCE;
 		
-		// TODO
-		// Temporary!!!
-		reinforcements = 10;
-		if (currentPlayer.equals("red"))
-			currentPlayer = "green";
-		else
-			currentPlayer = "red";
+		players.addLast(currentPlayer);
+		currentPlayer = players.removeFirst();
+		
+		reinforcements = wm.calculateReinforcements(currentPlayer);
 		
 		update();
 	}
 	
+	public void addPlayer(String name) {
+		players.addLast(name);
+	}
 	
 	// Temporary function
 	public synchronized void randomizeTerritoryOwners() {
@@ -63,18 +69,18 @@ public class Control extends Observable implements Info {
 			return;
 		}
 		Random r = new Random();
-		for (TerritoryActual t : wm.allTerritories()) {
-			t.setOwner("nobody");
+		for (String t : wm.allTerritories()) {
+			//t.setOwner("nobody");
 			
 			switch (r.nextInt(2)) {
 			case 0:
-				t.setOwner("red");
+				wm.setOwner(t,"red");
 				break;
 			case 1:
-				t.setOwner("green");
+				wm.setOwner(t,"green");
 				break;
 			case 2:
-				t.setOwner("blue");
+				//t.setOwner("blue");
 				break;
 			default:
 				break;
@@ -84,6 +90,14 @@ public class Control extends Observable implements Info {
 		endTurn();
 	}
 	
+	public synchronized void endPhase() {
+		System.out.println(phase+" Phase Complete!");
+		phase = Phase.next(phase);
+		if (phase == Phase.REINFORCE)
+			endTurn();
+		else
+			update();
+	}
 	
 	private void reinforce(String t, int n) {
 		wm.territory(t).addTroops(n);
@@ -95,14 +109,34 @@ public class Control extends Observable implements Info {
 		}
 	}
 	
-	private void endPhase() {
-		System.out.println(phase+" Phase Complete!");
-		phase = Phase.next(phase);
-		update();
+	private void attack(String from, String to, int amount) {
+		int defenders = Math.min(2,wm.territory(to).getTroops());
+		
+		if (amount == 0) return;
+		if (defenders == 0) {
+			wm.setOwner(to, currentPlayer);
+			wm.territory(to).addTroops(2);
+			wm.territory(from).addTroops(-2);
+		}
+		
+		/*
+		Random r = new Random();
+		int[] diceA = new int[amount];
+		int[] diceD = new int[defenders];
+		for (int i=0; i<amount; i++) {
+			diceA[i] = r.nextInt(6);
+		}
+		for (int i=0; i<defenders; i++) {
+			diceD[i] = r.nextInt(6);
+		}*/
+		
+		
+		
+		
 	}
 	
+	
 	private void update() {
-		System.out.println("update!");
 		//GameInfo gi = new GameInfo(phase, currentPlayer, reinforcements);
 		setChanged();
 		SwingUtilities.invokeLater(new Runnable() {
